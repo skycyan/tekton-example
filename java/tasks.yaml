@@ -1,0 +1,104 @@
+#apiVersion: tekton.dev/v1alpha1
+#kind: PipelineResource
+#metadata:
+#  name: pipeline-resource-java-gitsource
+#spec:
+#  type: git
+#  params:
+#  - name: url
+#    value: https://github.com/xxx/knative-helloworld-java-spring.git
+#  - name: revision
+#    value: master
+
+---
+#apiVersion: tekton.dev/v1alpha1
+#kind: PipelineResource
+#metadata:
+#  name: pipeline-resource-java-builtimage
+#spec:
+#  type: image
+#  params:
+#  - name: url
+#    value: xxx/cnlab/test:v1.0
+
+---
+apiVersion: tekton.dev/v1alpha1
+kind: Task
+metadata:
+  name: task-java-template
+  namespace: tekton-pipelines
+spec:
+  inputs:
+    resources:
+    - name: git-workspace
+      type: git
+    params: 
+    - name: directory
+      type: string
+      default: /workspace/git-workspace
+    - name: dockerfilename
+      type: string
+      default: /workspace/git-workspace/Dockerfile
+  outputs:
+    resources:
+    - name: builtImage
+      type: image
+  steps:
+    - name: maven-compile
+      image: maven:3.6.1-jdk-8-alpine-private
+      workingDir: "$(inputs.params.directory)"
+      args:
+        [
+          "mvn",
+          "clean",
+          "install",
+          "-D maven.test.skip=true",
+        ]
+      volumeMounts:
+      - name: localtime
+        mountPath: /etc/localtime
+      - name: maven-storage
+        mountPath: /root/.m2
+
+    - name: dockerfile-build
+      image: docker:git
+      workingDir: "$(inputs.params.directory)"
+      args:
+        [
+          "build",
+          "--no-cache",
+          "--tag",
+          "$(outputs.resources.builtImage.url)",
+          "--file",
+          "$(inputs.params.dockerfilename)",
+          ".",
+        ]
+      volumeMounts:
+      - name: localtime
+        mountPath: /etc/localtime
+      - name: docker-socket
+        mountPath: /var/run/docker.sock
+
+    - name: push-image
+      image: docker:git
+      args: [
+              "push",
+              "$(outputs.resources.builtImage.url)",
+            ]
+      volumeMounts:
+      - name: localtime
+        mountPath: /etc/localtime
+      - name: docker-socket
+        mountPath: /var/run/docker.sock
+
+  volumes:
+  - name: localtime
+    hostPath:
+      path: /usr/share/zoneinfo/Asia/Shanghai
+  - name: docker-socket
+    hostPath:
+      path: /var/run/docker.sock
+      type: Socket
+  - name: maven-storage
+    persistentVolumeClaim:
+      claimName: maven-pvc

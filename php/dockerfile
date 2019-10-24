@@ -1,0 +1,9 @@
+FROM xxx/cnlab/php-tw-runtime:v1
+
+RUN mkdir -p /var/www/hosts/api
+
+COPY ./ /var/www/hosts/api
+
+EXPOSE 80
+
+CMD ["/run.sh"]

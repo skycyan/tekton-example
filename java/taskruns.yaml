@@ -1,0 +1,36 @@
+apiVersion: tekton.dev/v1alpha1
+kind: TaskRun
+metadata:
+  name: taskrun-java
+  namespace: tekton-pipelines
+spec:
+  inputs:
+    params:
+    - name: dockerfilename
+      value: /workspace/git-workspace/Dockerfile
+    resources:
+#    - name: git-workspace
+#      resourceRef:
+#        name: pipeline-resource-java-gitsource
+    - name: git-workspace
+      resourceSpec:
+        type: git
+        params:
+        - name: url
+          value: https://github.com/adminops/knative-helloworld-java-spring.git
+        - name: revision
+          value: master
+  outputs:
+    resources:
+#    - name: builtImage
+#      resourceRef:
+#        name: pipeline-resource-java-builtimage
+    - name: builtImage
+      resourceSpec:
+        type: image
+        params:
+        - name: url
+          value: cnlab/test:v1.1
+  serviceAccount: docker-git-auth-sa
+  taskRef:
+    name: task-java-template
