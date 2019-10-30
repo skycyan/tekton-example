@@ -1,0 +1,23 @@
+FROM centos:7
+
+LABEL maintainer="kubectl@You"
+
+ENV KUBECTL_VERSION=1.14.8
+
+RUN set -x \
+&& echo -e \
+"[kubernetes]\n\
+name=Kubernetes\n\
+baseurl=https://mirrors.aliyun.com/kubernetes/yum/repos/kubernetes-el7-x86_64/\n\
+enabled=1\n\
+gpgcheck=1\n\
+repo_gpgcheck=1\n\
+gpgkey=https://mirrors.aliyun.com/kubernetes/yum/doc/yum-key.gpg https://mirrors.aliyun.com/kubernetes/yum/doc/rpm-package-key.gpg" > /etc/yum.repos.d/kubernetes.repo \
+&& yum -y install kubectl-${KUBECTL_VERSION} \
+&& yum clean all \
+&& mkdir -p /root/.kube
+
+#ADD ./config /root/.kube/
+
+ENTRYPOINT ["kubectl"]
+CMD ["--help"]

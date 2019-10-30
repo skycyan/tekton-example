@@ -1,0 +1,19 @@
+apiVersion: v1
+clusters:
+- cluster:
+    certificate-authority-data: UdJTiBDRVJUSUZJQ0FUNd0VRWURWUVFERXdwcmRXSmwKY201bGRHVnpNQjRYRFRFNU1EY3hOREE0TkRrMU9Wb1hEVEk1TURjeE1UQTRORGsxT1Zvd0ZURVRGpTY2NXeVgvWHlmZ2JVNGZIN2laRTQvTEpXV3dVbGM0Q0ZJL1R4UAo4ZWpFYTc2UDhkSnZwUEVRS05SVnJoN3dTRTI4L1IvbzVsUytwN1RXdmhuTk1XNjNOSmg0MGppRVBQaEJEWXl
+    server: https://cluster1.k8s.arch.api:6443
+  name: cnlab
+contexts:
+- context:
+    cluster: cnlab
+    user: kubernetes-admin
+  name: kubernetes-admin@cnlab
+current-context: kubernetes-admin@cnlab
+kind: Config
+preferences: {}
+users:
+- name: kubernetes-admin
+  user:
+    client-certificate-data: TiBDRVJUSUZJQ0FURS0tLS0tCk1JSUM4laWEp1WlhSbGN6QWVGdzB4TREbk41YzNSbGJUcHRZWE4wWlhKek1Sa3dGd1lEVlFRREV4QnJkV0psY201bGRHVnpMV0ZrCmJXbHVNSUlCSWpBTkJna3Foa2lHOXcwQkFRRUZBQU9DQVE4QU1JSUJDZ0tDQVFFQXJNSXhiWTV4K3VGjlpWjdFbWQ1TXFJV0ZIaFVlWkJ1c0tDcnZQ
+    client-key-data: BSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFcFFJQkFBS0NBUUVBck1JeGJZNXgrdUZ3UmJiaUZ2d3lFVEJ5aUhSSzl3cHkvaEdUVE5MaEgxWjhLNE40CjJTODkzakVYOFNETDdFckliMDMvN1BOYzBORGI0VEtsRVV3Uys3d1lGY0pRWE9sQzZtYmlXZ0lwTHFrMVNBYUUKUGQzOENvRkdadEJ6WmFSWFN1bW5OaElIS3ZQM2NMMXk5aVo3RW1kNU1xSVdGSGhVZVpCdXNLQ3J2UGpiU1dvNwpVMEMxbTR2M2tCaHJXSXZraDRvcU1heFhwSVhDUGFsL2N3a3pWcW1yd3ZJSVZ5alpGWiszaWIwS3RNNkJJbWduCnZ1cXFMenZyMHdCS1

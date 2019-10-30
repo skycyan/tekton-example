@@ -1,0 +1,38 @@
+apiVersion: tekton.dev/v1alpha1
+kind: TaskRun
+metadata:
+  name: taskrun-productapi
+  namespace: tekton-pipelines
+spec:
+  inputs:
+    resources:
+#      - name: git-source
+#        resourceRef:
+#          name: pipeline-resource-php-gitsource
+      - name: git-source
+        resourceSpec:
+          type: git
+          params:
+          - name: url
+            value: http://git.xxxx.com/prodapi/api-k8s.git
+          - name: revision
+            value: master
+    params:
+      - name: pathToDockerFile
+        value: /workspace/git-source/Dockerfile
+      - name: pathToDeployment
+        value: /workspace/git-source/knative-productapi.yaml
+  outputs:
+#    resources:
+#      - name: builtImage
+#        resourceRef:
+#          name: pipeline-resource-php-builtimage
+      - name: builtImage
+        resourceSpec:
+          type: image
+          params:
+            - name: url
+              value: layershop.xxxx.com/cnlab/productapi:v1.2
+  serviceAccountName: docker-git-sa
+  taskRef:
+    name: task-php-build-push-deployment

@@ -1,0 +1,24 @@
+apiVersion: tekton.dev/v1alpha1
+kind: PipelineResource
+metadata:
+  name: pipeline-resource-php-gitsource
+  namespace: tekton-pipelines
+spec:
+  type: git
+  params:
+  - name: url
+    value: http://git.xxxx.com/prodapi/api-k8s.git
+  - name: revision
+    value: master
+
+---
+apiVersion: tekton.dev/v1alpha1
+kind: PipelineResource
+metadata:
+  name: pipeline-resource-php-builtimage
+  namespace: tekton-pipelines
+spec:
+  type: image
+  params:
+  - name: url
+    value: layershop.xxxx.com/cnlab/productapi:v1.1

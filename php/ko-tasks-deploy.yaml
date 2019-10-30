@@ -1,0 +1,66 @@
+apiVersion: tekton.dev/v1alpha1
+kind: Task
+metadata:
+  name: task-php-build-push-deployment
+  namespace: tekton-pipelines
+spec:
+  inputs:
+    resources:
+    - name: git-source
+      type: git
+    params: 
+    - name: pathToContext
+      type: string
+      default: /workspace/
+    - name: pathToDockerFile
+      type: string
+      default: /workspace/git-source/Dockerfile
+      # 项目真正地址/workspace/git-source
+    - name: pathToDeployment
+      type: string
+      default: /workspace/git-source/deployment.yaml
+  outputs:
+    resources:
+    - name: builtImage
+      type: image
+      targetPath: /workspace/output/builtImage
+  steps:
+#    - name: check
+#      image: layershop.xxxx.com/cnlab/kaniko-project/executor:debug-v0.13.0
+#      command:
+#        - /busybox/sh
+#      args:
+#      - -c
+#      - |
+#        sleep 1h
+    - name: build-and-push
+      # https://github.com/GoogleContainerTools/kaniko
+      image: layershop.xxxx.com/cnlab/kaniko-project/executor:debug-v0.13.0
+      env:
+        - name: "DOCKER_CONFIG"
+          # /builder/home/.docker/ 此路径写死，否则在push时报权限为授权
+          value: "/builder/home/.docker/"
+      command:
+        - /kaniko/executor
+      args:
+        - --dockerfile=$(inputs.params.pathToDockerFile)
+        - --destination=$(outputs.resources.builtImage.url)
+        - --context=$(inputs.params.pathToContext)
+    - name: run-kubectl
+      #image: lachlanevenson/k8s-kubectl
+      image: layershop.xxxx.com/cnlab/k8s-kubectl:v1.14.8
+      command: ['kubectl']
+      args:
+      - 'apply'
+      - '-f'
+      - '$(inputs.params.pathToDeployment)'
+      volumeMounts:
+        - name: kubernetes-config
+          mountPath: /root/.kube
+  volumes:
+    - name: kubernetes-config
+      configMap:
+        name: k8s-config
+        items:
+          - key: config
+            path: config
