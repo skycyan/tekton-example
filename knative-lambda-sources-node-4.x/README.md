@@ -1,4 +1,5 @@
-# 参照 https://github.com/triggermesh/knative-lambda-runtime,构建node4函数
+# 参照triggermesh knative-lambda项目：
+https://github.com/triggermesh/knative-lambda-runtime
 
 1. 
 kubectl -n default create secret generic docker-registry --from-file=.dockerconfigjson=/root/.docker/config.json --from-file=config.json=/root/.docker/config.json --type=kubernetes.io/dockerconfigjson
