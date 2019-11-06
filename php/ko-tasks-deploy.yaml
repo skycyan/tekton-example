@@ -38,7 +38,8 @@ spec:
       image: layershop.xxxx.com/cnlab/kaniko-project/executor:debug-v0.13.0
       env:
         - name: "DOCKER_CONFIG"
-          # /builder/home/.docker/ 此路径写死，否则在push时报权限为授权
+          # taskrun中有serviceAccountName配置，会直接把docker认证挂载到/builder/home/.docker/config.json
+          # 如果更改默认路径/builder/home/.docker，需要在task模版中配置volumeMounts，需要docker secret挂载到容器中（是secret不是sa）否则在push时报权限为授权
           value: "/builder/home/.docker/"
       command:
         - /kaniko/executor
