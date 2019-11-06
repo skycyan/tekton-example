@@ -1,0 +1,27 @@
+apiVersion: tekton.dev/v1alpha1
+kind: TaskRun
+metadata:
+  name: node4-test-you
+  namespace: default
+spec:
+  inputs:
+    params:
+    - name: IMAGE
+      value: layershop.dangdang.com/cnlab/node4-test:v1-you
+    - name: HANDLER
+      value: handler.landingPage
+    - name: DIRECTORY
+      value: aws-node-serve-dynamic-html-via-http-endpoint
+    resources:
+    - name: sources
+      resourceRef:
+        apiVersion: tekton.dev/v1alpha1
+        name: node4-test
+  outputs: {}
+  podTemplate: {}
+  serviceAccountName: docker-git-auth-sa
+  taskRef:
+#    apiVersion: tekton.dev/v1alpha1
+#    kind: Task
+    name: knative-node4-runtime-you
+  timeout: 1h0m0s
