@@ -19,7 +19,7 @@ spec:
       type: git
   steps:
   - name: create-dockerfile
-    image: layershop.xxxx.com/cnlab/kaniko-project/executor:debug-v0.13.0
+    image: gcr.io/kaniko-project/executor:debug-v0.13.0
     command:
     - /busybox/sh
     env:
@@ -30,7 +30,7 @@ spec:
     - |
       cd /workspace/workspace/$(inputs.params.DIRECTORY)
       cat <<EOF > Dockerfile
-        FROM layershop.xxxx.com/cnlab/triggermesh/knative-lambda-node4
+        FROM gcr.io/triggermesh/knative-lambda-node4
         ENV _HANDLER "$(inputs.params.HANDLER)"
 
         COPY . .
@@ -38,7 +38,7 @@ spec:
         ENTRYPOINT ["/opt/aws-custom-runtime"]
       EOF
   - name: build-and-push
-    image: layershop.xxxx.com/cnlab/kaniko-project/executor:debug-v0.13.0
+    image: gcr.io/kaniko-project/executor:debug-v0.13.0
     command:
     - /kaniko/executor
     args:
@@ -50,7 +50,7 @@ spec:
     - name: DOCKER_CONFIG
       value: "/builder/home/.docker/"
   - name: create-knative-service-file
-    image: layershop.xxxx.com/cnlab/kaniko-project/executor:debug-v0.13.0
+    image: gcr.io/kaniko-project/executor:debug-v0.13.0
     command:
     - /busybox/sh
     env:
@@ -93,7 +93,7 @@ spec:
                     memory: 1Gi
       EOF
 #  - name: debug
-#    image: layershop.xxxx.com/cnlab/kaniko-project/executor:debug-v0.13.0
+#    image: gcr.io/kaniko-project/executor:debug-v0.13.0
 #    command:
 #    - /busybox/sh
 #    args:
