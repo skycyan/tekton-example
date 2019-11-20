@@ -1,0 +1,35 @@
+apiVersion: tekton.dev/v1alpha1
+kind: Pipeline
+metadata:
+  name: pipeline-nodejs4
+  namespace: tekton-pipelines
+spec:
+  params:
+  - name: IMAGE
+    description: The URI of the image to push, including registry host
+    default: layershop.xxxx.com/cnlab/node4-test:20191119-v1
+  - name: HANDLER
+    default: handler.landingPage
+  - name: DIRECTORY
+    description: The subdirectory of the workspace/repo
+#    default: "."
+    default: aws-node-serve-dynamic-html-via-http-endpoint
+  resources:
+  - name: git-source
+    type: git
+  tasks:
+  - name: pipeline-nodejs4
+    params:
+    - name: IMAGE
+      value: $(params.IMAGE)
+    - name: HANDLER
+      value: $(params.HANDLER)
+    - name: DIRECTORY
+      value: $(params.DIRECTORY)
+    resources:
+      inputs:
+      - name: git-source
+        resource: git-source
+    taskRef:
+      kind: Task
+      name: knative-node4-runtime-z

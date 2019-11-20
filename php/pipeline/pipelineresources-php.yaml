@@ -1,0 +1,12 @@
+apiVersion: tekton.dev/v1alpha1
+kind: PipelineResource
+metadata:
+  name: pipeline-resource-git-php
+  namespace: tekton-pipelines
+spec:
+  params:
+  - name: url
+    value: http://git.xxxx.com/prodapi/api-k8s.git
+  - name: revision
+    value: master
+  type: git

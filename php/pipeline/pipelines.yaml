@@ -1,0 +1,25 @@
+apiVersion: tekton.dev/v1alpha1
+kind: Pipeline
+metadata:
+  name: pipeline-php
+  namespace: tekton-pipelines
+spec:
+  params:
+  - name: IMAGE
+    description: The URI of the image to push, including registry host
+    default: layershop.xxxx.com/cnlab/php-api:20191120-v1
+  resources:
+  - name: git-source
+    type: git
+  tasks:
+  - name: pipeline-php
+    params:
+    - name: IMAGE
+      value: $(params.IMAGE)
+    resources:
+      inputs:
+      - name: git-source
+        resource: git-source
+    taskRef:
+      kind: Task
+      name: task-php

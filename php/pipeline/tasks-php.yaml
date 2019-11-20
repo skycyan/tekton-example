@@ -1,0 +1,104 @@
+apiVersion: tekton.dev/v1alpha1
+kind: Task
+metadata:
+  name: task-php
+  namespace: tekton-pipelines
+spec:
+  inputs:
+    resources:
+    - name: git-source
+      type: git
+    params:
+    - name: IMAGE
+      description: The URI of the image to push, including registry host
+  steps:
+    - name: create-dockerfile
+      image: layershop.xxxx.com/cnlab/kaniko-project/executor:debug-v0.13.0
+      command:
+      - /busybox/sh
+      env:
+      - name: DOCKER_CONFIG
+        value: "/builder/home/.docker/"
+      args:
+      - -c
+      - |
+        cd /workspace/git-source
+        cat <<EOF > Dockerfile
+          FROM layershop.xxxx.com/cnlab/php-tw-runtime:v1
+          RUN mkdir -p /var/www/hosts/productapi
+          COPY ./git-source /var/www/hosts/productapi/
+          EXPOSE 80
+          CMD ["/run.sh"]
+        EOF
+    - name: build-and-push
+      image: layershop.xxxx.com/cnlab/kaniko-project/executor:debug-v0.13.0
+      env:
+      - name: "DOCKER_CONFIG"
+        value: "/builder/home/.docker/"
+      command:
+      - /kaniko/executor
+      args:
+      - --dockerfile=/workspace/git-source/Dockerfile
+      - --destination=$(inputs.params.IMAGE)
+      - --context=/workspace/
+      - --verbosity=info
+    - name: create-knative-service-file
+      image: layershop.xxxx.com/cnlab/kaniko-project/executor:debug-v0.13.0
+      command:
+      - /busybox/sh
+      env:
+      - name: DOCKER_CONFIG
+        value: "/builder/home/.docker/"
+      args:
+      - -c
+      - |
+        cd /workspace/git-source
+        cat <<EOF > knative-service-php.yaml
+          apiVersion: serving.knative.dev/v1alpha1
+          kind: Service
+          metadata:
+            name: php
+            namespace: default
+            labels:
+              application: php
+              tier: application
+          spec:
+            template:
+              metadata:
+                labels:
+                  application: php
+                  tier: application
+                annotations:
+                  autoscaling.knative.dev/class: kpa.autoscaling.knative.dev
+                  autoscaling.knative.dev/metric: concurrency
+                  autoscaling.knative.dev/target: "50"
+                  autoscaling.knative.dev/minScale: "1"
+                  autoscaling.knative.dev/maxScale: "5"
+              spec:
+                containers:
+                - image: "$(inputs.params.IMAGE)"
+                  imagePullPolicy: IfNotPresent
+                  ports:
+                  - containerPort: 80
+                  resources:
+                    limits:
+                      cpu: 2
+                      memory: 2Gi
+        EOF
+    - name: run-kubectl
+      image: layershop.xxxx.com/cnlab/k8s-kubectl:v1.14.8
+      command: ['kubectl']
+      args:
+      - 'apply'
+      - '-f'
+      - '/workspace/git-source/knative-service-php.yaml'
+      volumeMounts:
+        - name: kubernetes-config
+          mountPath: /root/.kube
+  volumes:
+    - name: kubernetes-config 
+      configMap:
+        name: k8s-config
+        items:
+          - key: config
+            path: config

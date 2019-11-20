@@ -1,0 +1,119 @@
+apiVersion: tekton.dev/v1alpha1
+kind: Task
+metadata:
+  name: knative-node4-runtime-z
+  namespace: tekton-pipelines
+spec:
+  inputs:
+    params:
+    - name: IMAGE
+      description: The URI of the image to push, including registry host
+    - name: DIRECTORY
+      description: The subdirectory of the workspace/repo
+      default: "."
+    - name: HANDLER
+      default: "function.handler"
+    resources:
+    - name: git-source
+      targetPath: /workspace
+      type: git
+  steps:
+  - name: create-dockerfile
+    image: layershop.xxxx.com/cnlab/kaniko-project/executor:debug-v0.13.0
+    command:
+    - /busybox/sh
+    env:
+    - name: DOCKER_CONFIG
+      value: "/builder/home/.docker/"
+    args:
+    - -c
+    - |
+      cd /workspace/workspace/$(inputs.params.DIRECTORY)
+      cat <<EOF > Dockerfile
+        FROM layershop.xxxx.com/cnlab/triggermesh/knative-lambda-node4
+        ENV _HANDLER "$(inputs.params.HANDLER)"
+
+        COPY . .
+        RUN npm install
+        ENTRYPOINT ["/opt/aws-custom-runtime"]
+      EOF
+  - name: build-and-push
+    image: layershop.xxxx.com/cnlab/kaniko-project/executor:debug-v0.13.0
+    command:
+    - /kaniko/executor
+    args:
+    - --dockerfile=Dockerfile
+    - --context=/workspace/workspace/$(inputs.params.DIRECTORY)
+    - --destination=$(inputs.params.IMAGE)
+    - --verbosity=info
+    env:
+    - name: DOCKER_CONFIG
+      value: "/builder/home/.docker/"
+  - name: create-knative-service-file
+    image: layershop.xxxx.com/cnlab/kaniko-project/executor:debug-v0.13.0
+    command:
+    - /busybox/sh
+    env:
+    - name: DOCKER_CONFIG
+      value: "/builder/home/.docker/"
+    args:
+    - -c
+    - |
+      cd /workspace/workspace/$(inputs.params.DIRECTORY)
+      cat <<EOF > knative-service-nodejs4.yaml
+        apiVersion: serving.knative.dev/v1alpha1
+        kind: Service
+        metadata:
+          name: nodejs4
+          namespace: default
+          labels:
+            application: nodejs4
+            tier: application
+        spec:
+          template:
+            metadata:
+              labels:
+                application: nodejs4
+                tier: application
+              annotations:
+                autoscaling.knative.dev/class: kpa.autoscaling.knative.dev
+                autoscaling.knative.dev/metric: concurrency
+                autoscaling.knative.dev/target: "50"
+                autoscaling.knative.dev/minScale: "1"
+                autoscaling.knative.dev/maxScale: "5"
+            spec:
+              containers:
+              - image: "$(inputs.params.IMAGE)"
+                imagePullPolicy: IfNotPresent
+                ports:
+                - containerPort: 8080
+                resources:
+                  limits:
+                    cpu: 1
+                    memory: 1Gi
+      EOF
+#  - name: debug
+#    image: layershop.xxxx.com/cnlab/kaniko-project/executor:debug-v0.13.0
+#    command:
+#    - /busybox/sh
+#    args:
+#    - -c
+#    - |
+#      sleep 1h
+  - name: run-kubectl
+    image: layershop.xxxx.com/cnlab/k8s-kubectl:v1.14.8
+    command: ['kubectl']
+    args:
+    - 'apply'
+    - '-f'
+    - "/workspace/workspace/$(inputs.params.DIRECTORY)/knative-service-nodejs4.yaml"
+    volumeMounts:
+      - name: kubernetes-config
+        mountPath: /root/.kube
+  volumes:
+    - name: kubernetes-config
+      configMap:
+        name: k8s-config
+        items:
+          - key: config
+            path: config
